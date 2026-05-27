@@ -1,0 +1,428 @@
+<script>
+
+  // =========================
+  // FLOATING HEARTS
+  // =========================
+  const hEmojis=['🌸','💜','🌷','💕','🩷','✨'];
+  const hCont=document.getElementById('heartsContainer');
+
+  for(let i=0;i<16;i++){
+    const h=document.createElement('div');
+
+    h.className='heart';
+
+    h.textContent=hEmojis[i%hEmojis.length];
+
+    h.style.cssText=`
+      left:${Math.random()*90}%;
+      animation-delay:${Math.random()*6}s;
+      animation-duration:${4+Math.random()*4}s;
+      font-size:${14+Math.random()*16}px
+    `;
+
+    hCont.appendChild(h);
+  }
+
+  // =========================
+  // COUNTDOWN
+  // =========================
+  const startDate=new Date();
+
+  startDate.setDate(startDate.getDate()-664);
+
+  function updateCountdown(){
+
+    const now=new Date();
+
+    const diff=now-startDate;
+
+    const totalDays=Math.floor(diff/86400000);
+
+    const hours=now.getHours();
+
+    const years=Math.floor(totalDays/365);
+
+    const months=Math.floor((totalDays%365)/30);
+
+    document.getElementById('bigCount').textContent=totalDays;
+    document.getElementById('liveDays').textContent=totalDays;
+    document.getElementById('countDays2').textContent=totalDays;
+    document.getElementById('countYears').textContent=years;
+    document.getElementById('countMonths').textContent=months;
+    document.getElementById('countHours').textContent=hours;
+  }
+
+  updateCountdown();
+
+  setInterval(updateCountdown,60000);
+
+  // =========================
+  // LETTER SAVE
+  // =========================
+  function toggleLetterEdit(){
+
+    const a=document.getElementById('letterInput');
+
+    const h=document.getElementById('editHint');
+
+    if(a.style.display==='block'){
+      a.style.display='none';
+      h.textContent='✏️ Edit your message';
+    }else{
+      a.style.display='block';
+      h.textContent='✖ Cancel';
+      document.getElementById('letterTextarea').focus();
+    }
+  }
+
+  function saveLetter(){
+
+    const t=document.getElementById('letterTextarea').value.trim();
+
+    localStorage.setItem('bliLetter',t);
+
+    document.getElementById('letterDisplay').innerHTML=t
+      ? t.split('\n').map(l=>l?`<p style="margin-bottom:10px">${l}</p>`:'<br>').join('')
+      : '<p class="letter-placeholder">Your heartfelt message to Bli will appear here...</p>';
+
+    document.getElementById('letterInput').style.display='none';
+
+    document.getElementById('editHint').textContent='✏️ Edit your message';
+  }
+
+  function loadLetter(){
+
+    const saved=localStorage.getItem('bliLetter');
+
+    if(saved){
+
+      document.getElementById('letterTextarea').value=saved;
+
+      document.getElementById('letterDisplay').innerHTML=saved
+        .split('\n')
+        .map(l=>l?`<p style="margin-bottom:10px">${l}</p>`:'<br>')
+        .join('');
+    }
+  }
+
+  loadLetter();
+
+  // =========================
+  // GALLERY
+  // =========================
+  const grid=document.getElementById('galleryGrid');
+
+  for(let i=0;i<6;i++){
+
+    const slot=document.createElement('div');
+
+    slot.className='photo-slot fade-up';
+
+    slot.id='slot-'+i;
+
+    const saved=localStorage.getItem('bliPhoto'+i);
+
+    if(saved){
+
+      slot.innerHTML=`
+        <img src="${saved}" alt="Memory"/>
+        <input type="file" accept="image/*" onchange="loadPhoto(this,${i})"/>
+      `;
+
+    }else{
+
+      slot.innerHTML=`
+        <span class="slot-icon">🖼️</span>
+        <span class="slot-label">Add photo</span>
+        <input type="file" accept="image/*" onchange="loadPhoto(this,${i})"/>
+      `;
+    }
+
+    grid.appendChild(slot);
+  }
+
+  function loadPhoto(input,idx){
+
+    const file=input.files[0];
+
+    if(!file)return;
+
+    const r=new FileReader();
+
+    r.onload=e=>{
+
+      localStorage.setItem('bliPhoto'+idx,e.target.result);
+
+      document.getElementById('slot-'+idx).innerHTML=`
+        <img src="${e.target.result}" alt="Memory"/>
+        <input type="file" accept="image/*" onchange="loadPhoto(this,${idx})"/>
+      `;
+    };
+
+    r.readAsDataURL(file);
+  }
+
+  // =========================
+  // CAKE
+  // =========================
+  let candlesLeft=5;
+
+  function blowCandle(n){
+
+    const btn=document.getElementById('flame'+n);
+
+    btn.textContent='💨';
+
+    btn.disabled=true;
+
+    candlesLeft--;
+
+    document.getElementById('blowHint').textContent=
+      candlesLeft>0
+      ? `${candlesLeft} candle${candlesLeft>1?'s':''} left 🕯️`
+      : 'All blown out!';
+
+    if(candlesLeft===0){
+
+      document.getElementById('blownMsg').style.display='block';
+
+      document.getElementById('blowHint').style.display='none';
+
+      confetti({
+        particleCount:150,
+        spread:100
+      });
+    }
+  }
+
+  // =========================
+  // REMEMBER WHEN
+  // =========================
+  function showTab(id,el){
+
+    document.querySelectorAll('.rmcard')
+      .forEach(c=>c.classList.remove('visible'));
+
+    document.querySelectorAll('.rtab')
+      .forEach(t=>t.classList.remove('active'));
+
+    document.getElementById('tab-'+id)
+      .classList.add('visible');
+
+    el.classList.add('active');
+  }
+
+  function editCard(id){
+
+    const inp=document.getElementById('input-'+id);
+
+    inp.style.display=
+      inp.style.display==='block'
+      ? 'none'
+      : 'block';
+
+    if(inp.style.display==='block'){
+      document.getElementById('ta-'+id).focus();
+    }
+  }
+
+  function saveCard(id){
+
+    const val=document.getElementById('ta-'+id).value.trim();
+
+    if(val){
+
+      document.getElementById('body-'+id).textContent=val;
+
+      localStorage.setItem('card-'+id,val);
+    }
+
+    document.getElementById('input-'+id).style.display='none';
+  }
+
+  ['alone','sad','angry','miss','doubt'].forEach(id=>{
+
+    const saved=localStorage.getItem('card-'+id);
+
+    if(saved){
+      document.getElementById('body-'+id).textContent=saved;
+      document.getElementById('ta-'+id).value=saved;
+    }
+  });
+
+  // =========================
+  // PLAYLIST WITH AUDIO
+  // =========================
+  let songs=JSON.parse(localStorage.getItem('bliSongs')) || [];
+
+  function addSong(){
+
+    const name=document.getElementById('songName').value.trim();
+
+    const artist=document.getElementById('artistName').value.trim();
+
+    const audio=document.getElementById('audioFile').files[0];
+
+    if(!name)return;
+
+    if(audio){
+
+      const reader=new FileReader();
+
+      reader.onload=e=>{
+
+        songs.push({
+          name,
+          artist,
+          audio:e.target.result
+        });
+
+        saveSongs();
+      };
+
+      reader.readAsDataURL(audio);
+
+    }else{
+
+      songs.push({
+        name,
+        artist,
+        audio:null
+      });
+
+      saveSongs();
+    }
+
+    document.getElementById('songName').value='';
+    document.getElementById('artistName').value='';
+    document.getElementById('audioFile').value='';
+  }
+
+  function saveSongs(){
+
+    localStorage.setItem('bliSongs',JSON.stringify(songs));
+
+    renderSongs();
+  }
+
+  function removeSong(i){
+
+    songs.splice(i,1);
+
+    saveSongs();
+  }
+
+  function renderSongs(){
+
+    const l=document.getElementById('songsList');
+
+    if(!songs.length){
+
+      l.innerHTML=`
+        <div class="song-item">
+          <span style="font-size:20px">🎵</span>
+          <div class="song-info">
+            <div class="song-name">
+              Add songs that remind you of her
+            </div>
+            <div class="song-artist">
+              Your personal love playlist
+            </div>
+          </div>
+        </div>
+      `;
+
+      return;
+    }
+
+    l.innerHTML=songs.map((s,i)=>`
+      <div class="song-item fade-up">
+
+        <span style="font-size:20px">🎵</span>
+
+        <div class="song-info">
+
+          <div class="song-name">${s.name}</div>
+
+          <div class="song-artist">
+            ${s.artist||'Unknown artist'}
+          </div>
+
+          ${
+            s.audio
+            ? `
+            <audio controls class="song-audio">
+              <source src="${s.audio}">
+            </audio>
+            `
+            : ''
+          }
+
+        </div>
+
+        <button class="song-remove"
+          onclick="removeSong(${i})">
+          ✕
+        </button>
+
+      </div>
+    `).join('');
+  }
+
+  renderSongs();
+
+  // =========================
+  // THEME TOGGLE
+  // =========================
+  function toggleTheme(){
+
+    document.body.classList.toggle('dark');
+
+    const dark=document.body.classList.contains('dark');
+
+    localStorage.setItem('bliTheme',dark);
+
+    document.getElementById('themeBtn').textContent=
+      dark
+      ? '☀️ Light Mode'
+      : '🌙 Dark Mode';
+  }
+
+  function loadTheme(){
+
+    const dark=localStorage.getItem('bliTheme')==='true';
+
+    if(dark){
+
+      document.body.classList.add('dark');
+
+      document.getElementById('themeBtn').textContent='☀️ Light Mode';
+    }
+  }
+
+  loadTheme();
+
+  // =========================
+  // SHARE
+  // =========================
+  function handleShare(){
+
+    if(navigator.share){
+
+      navigator.share({
+        title:'Happy Birthday Bli! 🌸',
+        text:'A little something made just for you 💜'
+      });
+
+    }else{
+
+      navigator.clipboard.writeText(window.location.href)
+      .then(()=>alert('Link copied! Share it with Bli 💌'))
+      .catch(()=>alert('Share this page with Bli 🌷'));
+    }
+  }
+
+</script>
+
+<!-- CONFETTI -->
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
